@@ -443,11 +443,15 @@ class FiniteHorizon(MDP):
         # Run the finite horizon algorithm.
         self.time = _time.time()
         # loop through each time period
+        last_policy = None
         for n in range(self.N):
             W, X = self._bellmanOperator(self.V[:, self.N - n])
             stage = self.N - n - 1
             self.V[:, stage] = X
             self.policy[:, stage] = W
+            if last_policy is not None:
+                self.policy_differences.append((last_policy != W).sum())
+            last_policy = W
             if self.verbose:
                 print(("stage: %s, policy: %s") % (
                     stage, self.policy[:, stage].tolist()))
@@ -837,7 +841,7 @@ class PolicyIteration(MDP):
                 #     if self.verbose:
                 #         print(_MSG_STOP_EPSILON_OPTIMAL_VALUE)
             elif self.eval_type == "iterative":
-                self._evalPolicyIterative()
+                self._evalPolicyIterative(max_iter=self.max_iter)
             variation = _np.absolute(self.V - V_prev).max()
             self.value_variations.append(variation)
             # This should update the classes policy attribute but leave the
